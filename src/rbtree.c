@@ -68,8 +68,8 @@ void delete_rbtree(rbtree *t) {
 */
 void delete_node(rbtree* t, node_t *np) {
 	if (np != t->nil) {
-		free(np->left);
-		free(np->right);	
+		delete_node(t, np->left);
+		delete_node(t, np->right);	
 		free(np);
 	}
 }
@@ -238,19 +238,21 @@ node_t *rbtree_find(const rbtree *t, const key_t key) {
 	} 
 
 	node_t *temp = t->root;
-	while(key == temp->key) {
-		if (temp == t->nil) {	// 끝까지 찾았는데 없었다!
-			return NULL;
-		} else if (key == t->root->key) {//찾았다!
+	while(temp != t->nil) {
+		if (key == t->root->key) {//찾았다!
 			break;
 		} else if (key < temp->key) {	//left branch로 진행
 			temp = temp->left;
 		} else {	// right branch 로 진행
 			temp = temp->right;
 		}
+	} // 끝까지 찾았는데 없었다! == temp = t->nil
+	if (temp == t->nil) {
+		return NULL;
+	} else {
+		return temp;
 	}
-	
-    return temp;
+    
 }
 
 
@@ -293,6 +295,11 @@ node_t *rbtree_max(const rbtree *t) {
 */
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
     // TODO: implement to_array
+	for (size_t i = 0; i < n; i++) {
+		/* code */
+	}
+	
+
     return 0;
 }
 
