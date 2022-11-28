@@ -176,6 +176,9 @@ void right_rotate(rbtree *t, node_t *y) {
 */
 node_t *rbtree_insert(rbtree *t, const key_t key) {
     // TODO: implement insert
+	
+	
+
     return t->root;
 }
 
@@ -198,9 +201,27 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
     해당하는 node가 없으면 NULL 반환
 */
 node_t *rbtree_find(const rbtree *t, const key_t key) {
-    // TODO: implement find
-    return t->root;
+	if (!t || !t->root) {	//tree 구성 전
+		return NULL;
+	} 
+
+	node_t *temp = t->root;
+	while(key == temp->key) {
+		if (temp == t->nil) {	// 끝까지 찾았는데 없었다!
+			return NULL;
+		} else if (key == t->root->key) {//찾았다!
+			break;
+		} else if (key < temp->key) {	//left branch로 진행
+			temp = temp->left;
+		} else {	// right branch 로 진행
+			temp = temp->right;
+		}
+	}
+	
+    return temp;
 }
+
+
 
 
 
@@ -209,8 +230,11 @@ node_t *rbtree_find(const rbtree *t, const key_t key) {
     입력받은 tree 전체에서 key최소값을 가지는 node 반환   
 */
 node_t *rbtree_min(const rbtree *t) {
-    // TODO: implement find
-    return t->root;
+	node_t *temp = t->root;
+	while (temp != t->nil) {
+		temp = temp->left;
+	}
+    return temp;
 }
 
 
@@ -220,8 +244,11 @@ node_t *rbtree_min(const rbtree *t) {
     입력받은 tree 전체에서 key최대값을 가지는 node 반환   
 */
 node_t *rbtree_max(const rbtree *t) {
-    // TODO: implement find
-    return t->root;
+    node_t *temp = t->root;
+	while (temp != t->nil) {
+		temp = temp->right;
+	}
+    return temp;
 }
 
 
