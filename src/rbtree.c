@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 node_t *new_node(color_t, key_t);
-void delete_node(node_t *);
+void delete_node(rbtree *, node_t *);
 
 /*
     FUNCTION : new    return : rbtree pointer
@@ -45,13 +45,12 @@ node_t *new_node(color_t color, key_t key) {
 */
 void delete_rbtree(rbtree *t) {
     // TODO: reclaim the tree nodes's memory
-	if (t != NULL) {
+	if (t->root != t->nil) {
 		// root node free -> subtree까지 free
-    	// sentinel node 까지 free
-		delete_node(t->root);
-		delete_node(t->nil);
+		delete_node(t, t->root);
 	}
-    
+    // sentinel node 까지 free
+	free(t->nil);
     // finally, tree pointer free
     free(t);
 }
@@ -64,8 +63,8 @@ void delete_rbtree(rbtree *t) {
 	재귀적인 방식으로 l/r subtree 노드들 차례로 풀어준다 
 	이후 본인 free 
 */
-void delete_node(node_t *np) {
-	if (np != NULL) {
+void delete_node(rbtree* t, node_t *np) {
+	if (np != t->nil) {
 		free(np->left);
 		free(np->right);	
 		free(np);
