@@ -214,14 +214,70 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
 
 
 //   TODO : insert_fixup()
-void rbtree_insert_fixup(const rbtree *t, node_t *z) {
-
-}
 /*
     FUCNTION : insert_fixup   return : 0
     insert에서 전달한 graynode를 3가지 CASE로 나눠 분류해 
     CASE3로 수렴하도록 한다 
     CASE 3에서 graynode를 해결해 트리 균형을 맞춰준다 
+*/
+void rbtree_insert_fixup(const rbtree *t, node_t *z) {
+	while (z->parent->color == RBTREE_RED) {
+		if (z->parent == z->parent->parent->left) {
+			//z의 부모가 할아버지의 왼쪽자식일 때
+			node_t *y = z->parent->parent->right;
+			if (y->color == RBTREE_RED) {	//CASE 1 : angry uncle
+				z->parent->color = RBTREE_BLACK;
+				y->color = RBTREE_BLACK;
+				z->parent->parent->color = RBTREE_RED;
+				// 이후 if-else문 탈출해서 다시 CASE확인 
+				// 할아버지에게 문제를 미룬다 
+				z = z->parent->parent;
+			} else {
+				if (z == z->parent->right) {//CASE 2 : 삼각형
+					z = z->parent;
+					left_rotate(t, z);
+				}	// rotation 후 CASE 3으로 진행
+				//CASE 3 : 일직선
+				z->parent->color = RBTREE_BLACK;
+				z->parent->parent->color = RBTREE_RED;
+				right_rotate(t, z->parent->parent);
+			}
+		} else { //z의 부모가 할아버지의 오른쪽자식일 때
+			node_t *y = z->parent->parent->left;
+			if (y->color == RBTREE_RED) {	//CASE 1 : angry uncle
+				z->parent->color = RBTREE_BLACK;
+				y->color = RBTREE_BLACK;
+				z->parent->parent->color = RBTREE_RED;
+				// 이후 if-else문 탈출해서 다시 CASE확인 
+				// 할아버지에게 문제를 미룬다 
+				z = z->parent->parent;
+			} else {
+				if (z == z->parent->left) {//CASE 2 : 삼각형
+					z = z->parent;
+					right_rotate(t, z);
+				}	// rotation 후 CASE 3으로 진행
+				//CASE 3 : 일직선
+				z->parent->color = RBTREE_BLACK;
+				z->parent->parent->color = RBTREE_RED;
+				left_rotate(t, z->parent->parent);
+			}
+		}
+	}
+	t->root->color = RBTREE_BLACK;
+}
+/*
+	CASE 1 의 목표 : z의 부모와 삼촌을 BLACK으로 바꾸고, 
+		할아버지를 RED로 바꾼다 
+		이후 할아버지에게 문제를 미루고 다시 CASE확인하게 한다 
+
+	CASE 2 의 목표 : z를 기준으로 left_rotation 
+		이후 CASE 3 이 해결하게 한다 
+
+	CASE 3 의 목표 : 모든 CASE 들이 수렴하는 곳 
+		여기서 문제를 해결한다 
+		부모와 할아버지의 색을 바꾼 후
+		할아버지를 기준으로 회전시켜서 해결! 
+
 */
 
 
@@ -295,13 +351,11 @@ node_t *rbtree_max(const rbtree *t) {
 */
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
     // TODO: implement to_array
-	for (size_t i = 0; i < n; i++) {
-		/* code */
-	}
-	
-
     return 0;
 }
+
+
+
 
 
 //++++++++++++++++++++++++삭제 구현++++++++++++++++++++++++++++++
