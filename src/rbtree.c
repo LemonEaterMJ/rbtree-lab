@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+node_t *new_node(color_t, key_t);
 
 /*
   FUNCTION : new    return : rbtree pointer
@@ -12,8 +13,9 @@
 */
 rbtree *new_rbtree(void) {
   rbtree *p = (rbtree *)calloc(1, sizeof(rbtree));
-  // TODO: initialize struct if needed
-  
+  // sentinel node 
+  p->nil = new_node(RBTREE_BLACK, 0);
+  p->root = p->nil;
   return p;
 }
 
@@ -23,7 +25,15 @@ rbtree *new_rbtree(void) {
   FUNCTION : new_node   return : node pointer 
   노드 생성 및 초기화 
 */
-// TODO : new_node    
+node_t *new_node(color_t color, key_t key) {
+  node_t *np = (node_t *)calloc(1, sizeof(node_t));
+  np->color = color;
+  np->key = key;
+  np->left = NULL;
+  np->right = NULL;
+  np->parent = NULL;
+  return np;
+}    
 
 
 
