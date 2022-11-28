@@ -4,6 +4,9 @@
 
 node_t *new_node(color_t, key_t);
 void delete_node(rbtree *, node_t *);
+void left_rotate(rbtree *, node_t *);
+void right_rotate(rbtree *, node_t *);
+
 
 /*
     FUNCTION : new    return : rbtree pointer
@@ -44,7 +47,6 @@ node_t *new_node(color_t color, key_t key) {
     rbtree 전체 삭제 및 memory deallocation : free()
 */
 void delete_rbtree(rbtree *t) {
-    // TODO: reclaim the tree nodes's memory
 	if (t->root != t->nil) {
 		// root node free -> subtree까지 free
 		delete_node(t, t->root);
@@ -74,9 +76,92 @@ void delete_node(rbtree* t, node_t *np) {
 
 
 
+/*
+	FUNCTION : left_rotate	return : 0
+	tree 와 x node를 받아 작동한다 
+	x의 오른쪽 자식이 y
+	x를 기준으로 왼쪽회전 
+	1. 베타를 떼다가 x 밑에 붙인다 
+	2. y의 부모 설정 
+	3. y 가 어느 위치의 자식인지 설정
+	4. y왼쪽에 x를 붙여준다 
+	5. x부모까지 y로 설정 
+*/
+void left_rotate(rbtree *t, node_t *x) {
+	node_t *y = x->right;	// set y
 
-//   TODO : left rotation
-//   TODO : right rotation
+	// 1. y의 서브트리를 x의 서브트리로 변환
+	x->right = y->left;		
+	// y의 왼쪽 서브트리가 있다면
+	// 그것을 x의 자식으로 설정 
+	// 없었으면 x 오른쪽 자식은 sentinel과 연결됨
+	if (y->left != t->nil) {
+		y->left->parent = x;	
+	}
+
+	// 2. y의 부모 설정
+	y->parent = x->parent;
+
+	// 3. y 가 어느 위치의 자식인지 설정
+	if (x->parent == t->nil) {	//x가 루트노드였을 때
+		t->root = y;
+	} else if (x == x->parent->left) {//x가 왼쪽자식일 때 
+		x->parent->left = y;		//x의 부모 왼쪽자식에 y 연결
+	} else {	// x가 오른쪽 자식일 때
+		x->parent->right = y;
+	}
+
+	// 4. y왼쪽에 x를 붙여준다 
+	y->left = x;
+
+	//5. x부모까지 y로 설정 
+	x->parent = y;
+}
+
+
+
+/*
+	FUNCTION : right_rotate	return : 0
+	tree 와 y node를 받아 작동한다 
+	y의 왼쪽 자식이 x
+	y를 기준으로 오른쪽회전 
+	1. 베타를 떼다가 y 밑에 붙인다 
+	2. x의 부모 설정 
+	3. x 가 어느 위치의 자식인지 설정
+	4. x오른쪽에 y를 붙여준다 
+	5. y부모까지 x로 설정 
+*/
+void right_rotate(rbtree *t, node_t *y) {
+	node_t *x = y->left;	// set x
+
+	// 1. 베타를 y의 밑에 붙인다
+	y->left = x->right;
+	// x의 오른쪽 서브트리가 있었다면
+	// 그것의 부모를 y로 설정 
+	// 없었으면 y의 왼쪽 자식은 sentinel 과 연결됨 
+	if (x->right != t->nil) {
+		x->right->parent = y;
+	}
+
+	// 2. x의 부모를 설정하자 
+	x->parent = y->parent;
+
+	// 3. x는 어느 위치의 자식인지 설정하자 
+	if (y->parent == t->nil) {	// y가 루트노드였을 때 
+		t->root = x;
+	} else if (y == y->parent->right) {//y가 오른쪽자식이었을때
+		y->parent->right = x;	// y의 부모 오른쪽에 x 연결 
+	} else {	// y가 왼쪽자식이었을 때
+		y->parent->left = x;
+	}
+
+	// 4. x 오른쪽에 y를 붙여준다 
+	x->right = y;
+
+	// 5. y의 부모까지 x로 설정해준다 
+	y->parent = x;
+}
+
 
 
 
@@ -183,3 +268,16 @@ int rbtree_erase(rbtree *t, node_t *p) {
     CASE4에 도달할 때 까지 while루프를 돌게 하는 것이 목표 
 */
 //   TODO : erase_fixup()
+
+
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// int main() {
+// 	rbtree *treePointer = new_rbtree();
+// 	treePointer->root = 
+
+	
+// 	delete_rbtree(treePointer);
+// 	return 0;
+// }
