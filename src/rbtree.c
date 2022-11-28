@@ -8,6 +8,8 @@ void left_rotate(rbtree *, node_t *);
 void right_rotate(rbtree *, node_t *);
 void rbtree_insert_fixup(const rbtree *, node_t *);
 void transplant(rbtree *, node_t *, node_t *);
+node_t *find_right_min(rbtree *, node_t *);
+void erase_fixup(rbtree *, node_t *);
 
 
 /*
@@ -290,25 +292,23 @@ void rbtree_insert_fixup(const rbtree *t, node_t *z) {
     해당하는 node가 없으면 NULL 반환
 */
 node_t *rbtree_find(const rbtree *t, const key_t key) {
-	if (!t || !t->root) {	//tree 구성 전
+	if (!t || !(t->root)) {	//tree 구성 전
 		return NULL;
 	} 
 
 	node_t *temp = t->root;
 	while(temp != t->nil) {
 		if (key == t->root->key) {//찾았다!
-			break;
+			return temp;
 		} else if (key < temp->key) {	//left branch로 진행
 			temp = temp->left;
 		} else {	// right branch 로 진행
 			temp = temp->right;
 		}
-	} // 끝까지 찾았는데 없었다! == temp = t->nil
-	if (temp == t->nil) {
-		return NULL;
-	} else {
-		return temp;
-	}
+	} 
+	// 끝까지 찾았는데 없었다! == temp = t->nil
+	return NULL;
+	
     
 }
 
@@ -384,12 +384,72 @@ void transplant(rbtree *t, node_t *u, node_t *v) {
 
 
 /*
+	FUNCTION : find_right_min 	return : node pointer
+	node pointer np 를 받아 np서브트리 최소노드포인터 리턴 
+	!!!!!!!!!!이 함수는 np subtree가 
+	반드시 존재한다는 가정하에 작성되었음.!!!!!!!!!!!!!!!!! 
+	사용할 때 주의할 것.
+*/
+node_t *find_right_min(rbtree *t, node_t *np) {
+	node_t *temp = np;
+	while (temp->left != t->nil) {
+		temp = temp->left;
+	}
+	return temp;
+}
+
+
+
+/*
     FUNCTION : erase  return : 0 
     지정된 node를 삭제하고 메모리 반환
     transplant 로 받은 노드들에 gray 부여하고 erase_fixup으로 전달
 */
-int rbtree_erase(rbtree *t, node_t *p) {
-    // TODO: implement erase
+int rbtree_erase(rbtree *t, node_t *z) {
+    node_t *y = z;
+	color_t y_original_color = y->color;
+	node_t *x;
+	
+	if (z->left == t->nil) {	//target의 왼쪽자식이 없음 
+		x = z->right;
+		// transplant는 x가 NIL이라도 작동한다 
+		transplant(t, z, z->right);
+	} else if (z->right == t->nil) {
+		x = z->left;
+		transplant(t, z, z->left);
+	} else {	// target은 자식이 두개다 
+		// target z의 right subtree가 반드시 존재한다는 가정하에, 
+		y = find_right_min(t, z->right);
+
+		// 삭제색 = successor의 색 
+		y_original_color = y->color;
+		x = y->right;
+		if (y->parent == z) {	//y가 z의 직계자식일 때 
+			x->parent = y;
+		} else {	//직계자식이 아닐 경우
+			transplant(t, y, y->right);
+			y->right = z->right;
+			y->right->parent = y;
+		}
+
+		transplant(t, z, y);
+		y->left = z->left;
+		y->left->parent = y;
+		y->color = z->color;
+	}
+
+	//삭제 대상인 z노드의 모든 데이터를 옮겼다 
+	// 이제 z memory deallocation
+	free(z);
+
+
+	//삭제색을 지정, 전달, 노드 삭제까지 진행 한 후
+	//삭제색이 검정이면 fixup에 전달
+	//x 가 graynode 
+	if (y_original_color == RBTREE_BLACK) {
+		erase_fixup(t, x);
+	}
+
     return 0;
 }
 
@@ -397,10 +457,110 @@ int rbtree_erase(rbtree *t, node_t *p) {
 
 /*
     FUNCTION : erase_fixup  return : 0
-    erase에서 전달한 graynode를 중심으로 CASE를 나눠 트리 불균형 해결 
+    erase에서 전달한 graynode x를 중심으로 CASE를 나눠 트리 불균형 해결 
     CASE4에 도달할 때 까지 while루프를 돌게 하는 것이 목표 
 */
 //   TODO : erase_fixup()
+void erase_fixup(rbtree *t, node_t *x) {
+	while (x != t->root && x->color == RBTREE_BLACK) {
+		if (x == x->parent->left) {	//x는 부모의 왼쪽자식임
+			// w는 x의 bro
+			node_t *w = x->parent->right;
+			if (w->color == RBTREE_RED) { // CASE1 : angry bro
+				w->color = RBTREE_BLACK;
+				x->parent->color = RBTREE_RED;
+				left_rotate(t, x->parent);
+				w = x->parent->right;	//회전 후 bro 다시 판정
+				//이후 case 2, 3, 4로 진행함 
+			}
+			if ((w->left->color == RBTREE_BLACK) && (w->right->color == RBTREE_BLACK)) {	// CASE 2
+				// bro is black && bro childs all black
+				w->color = RBTREE_RED;
+				x = x->parent;	// 부모에게 graynode 위임 
+				// 이후 바뀐 x로 while을 다시 돌며 case검사를 한다
+			} else {
+				if (w->right->color == RBTREE_BLACK) {	// CASE 3
+					//bro w 의 꺾인 자녀가 red 
+					w->left->color = RBTREE_BLACK;
+					w->color = RBTREE_RED;
+					right_rotate(t, w);
+
+					// bro 다시 판정
+					w = x->parent->right;
+
+					// 이후 그대로 CASE4로 진행하여 해결한다.
+				}
+				// CASE 4 : 여기서 해결한다 
+				w->color = x->parent->color;
+				x->parent->color = RBTREE_BLACK;
+				w->right->color = RBTREE_BLACK;
+				left_rotate(t, x->parent);
+
+				// 해결완료! 
+				x = t->root;
+			}
+		} else {	//x는 부모의 오른쪽자식임 
+			// w는 x의 bro
+			node_t *w = x->parent->left;
+			if (w->color == RBTREE_RED) { // CASE1 : angry bro
+				w->color = RBTREE_BLACK;
+				x->parent->color = RBTREE_RED;
+				right_rotate(t, x->parent);
+				w = x->parent->left;	//회전 후 bro 다시 판정
+				//이후 case 2, 3, 4로 진행함 
+			}
+			if ((w->left->color == RBTREE_BLACK) && (w->right->color == RBTREE_BLACK)) {	// CASE 2
+				// bro is black && bro childs all black
+				w->color = RBTREE_RED;
+				x = x->parent;	// 부모에게 graynode 위임 
+				// 이후 바뀐 x로 while을 다시 돌며 case검사를 한다
+			} else {
+				if (w->left->color == RBTREE_BLACK) {	// CASE 3
+					//bro w 의 꺾인 자녀가 red 
+					w->right->color = RBTREE_BLACK;
+					w->color = RBTREE_RED;
+					left_rotate(t, w);
+
+					// bro 다시 판정
+					w = x->parent->left;
+
+					// 이후 그대로 CASE4로 진행하여 해결한다.
+				}
+				// CASE 4 : 여기서 해결한다 
+				w->color = x->parent->color;
+				x->parent->color = RBTREE_BLACK;
+				w->left->color = RBTREE_BLACK;
+				right_rotate(t, x->parent);
+
+				// 해결완료! 
+				x = t->root;
+			}
+		}
+	}
+
+	// x는 root : always black
+	x->color = RBTREE_BLACK;
+}
+/*
+	CASE 1 목표 : graynode x의 bro 를 BLACK으로 만든 후, 
+		CASE 2, 3, 4로 해결하자!  
+		x의 부모와 bro의 색을 바꾸고 
+		x의 부모를 기준으로 회전 
+	
+	CASE 2 목표 : 부모에게 graynode를 토스하고 문제해결을 떠맡긴다 
+		이후 할아버지는 다시 CASE 검사를 돌면서 해결한다 
+
+	CASE 3 목표 : CASE 4로 형태를 바꾼 후 해결하기 
+		bro와 꺾인자녀의 색을 바꾸고
+		bro를 기준으로 회전 
+		이후 CASE4로 진행하여 해결 
+
+	CASE 4 목표 : 앞선 문제들이 수렴하는 곳. 여기서 해결한다. 
+		bro는 부모의 색으로 
+		bro의 일직선 자녀는 Black 으로 
+		부모는 Black 으로 
+		모든 색 변환 후 부모를 기준으로 회전 
+*/
 
 
 
