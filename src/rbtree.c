@@ -7,6 +7,7 @@ void delete_node(rbtree *, node_t *);
 void left_rotate(rbtree *, node_t *);
 void right_rotate(rbtree *, node_t *);
 void rbtree_insert_fixup(const rbtree *, node_t *);
+void transplant(rbtree *, node_t *, node_t *);
 
 
 /*
@@ -361,11 +362,23 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
 //++++++++++++++++++++++++삭제 구현++++++++++++++++++++++++++++++
 
 /*
-    FUNCTION : transplant   return : new node pointer
-    erase에서 필요한 node(들)을 찾아서 이름 붙인 후 
-    주소 반환 
+    FUNCTION : transplant   return : ??
+    v의 subtree를 u에 옮겨심는다 
+	v가 NIL node이더라도 v parent을 찾을 수 있다 
+	
+	node u의 부모가 node v의 부모가 된다 
+	u의 부모는 v를 (왼/오 검사를 해서)자식으로 가지게 된다   
 */
-//   TODO : transplant()
+void transplant(rbtree *t, node_t *u, node_t *v) {
+	if (u->parent == t->nil) {	// u가 루트일 때 
+		t->root = v;
+	} else if (u == u->parent->left) {	//u 가 부모의 왼쪽자식일때
+		u->parent->left = v;
+	} else {	//u가 부모의 오른쪽 자식일 때 
+		u->parent->right = v;
+	}
+	v->parent = u->parent;
+}
 
 
 
