@@ -6,6 +6,7 @@ node_t *new_node(color_t, key_t);
 void delete_node(rbtree *, node_t *);
 void left_rotate(rbtree *, node_t *);
 void right_rotate(rbtree *, node_t *);
+void rbtree_insert_fixup(const rbtree *, node_t *);
 
 
 /*
@@ -175,16 +176,47 @@ void right_rotate(rbtree *t, node_t *y) {
     #4 성질이 깨진 트리 균형을 맞춰줄 것이다 
 */
 node_t *rbtree_insert(rbtree *t, const key_t key) {
-    // TODO: implement insert
+    // key 키값을 가진 node 생성 
+	// insert시 색은 항상 RED
+	node_t *z = new_node(RBTREE_RED, key);
 	
-	
+	// TODO: implement insert
+	node_t *y = t->nil;
+	node_t *x = t->root;
+	while(x != t->nil) {
+		y = x;
+		if (z->key < x->key) {	// left branch로 진행
+			x = x->left;
+		} else {
+			x = x->right;
+		}
+	}	//BST 방식으로 z가 들어갈 자리 찾기
+	z->parent = y;
 
-    return t->root;
+	if (y == t->nil) {	//CASE : root insert
+		t->root = z;
+	} else if (z->key < y->key) {	//y의 left에 부착
+		y->left = z;
+	} else {	// zkey가 ykey보다 크거나같은 경우 right에 부착
+		y->right = z;
+	}
+	
+	//insert시에는 z가 항상 leafnode가 되므로, sentinel 연결해주기
+	z->left = t->nil;
+	z->right = t->nil;
+
+	//insert fixup으로 자료전달
+	rbtree_insert_fixup(t, z);
+
+    return z;
 }
 
 
 
 //   TODO : insert_fixup()
+void rbtree_insert_fixup(const rbtree *t, node_t *z) {
+
+}
 /*
     FUCNTION : insert_fixup   return : 0
     insert에서 전달한 graynode를 3가지 CASE로 나눠 분류해 
